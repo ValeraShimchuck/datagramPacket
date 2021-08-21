@@ -1,5 +1,6 @@
 package server;
 
+import java.io.*;
 import java.net.*;
 import java.util.StringTokenizer;
 
@@ -34,7 +35,7 @@ public class Main {
 
                 SrcPort = pin.getPort();
 
-                String str = new String(buf);
+                String str = (String) convertFromBytes(buf);
                 StringTokenizer st;
                 st = new StringTokenizer(str,"\r\n");
 
@@ -47,17 +48,16 @@ public class Main {
                         str.indexOf("(")+1,
                         str.lastIndexOf(")")
                 );
-                str = str.replaceAll("\0","");
                 String[] strings = str.split(" ");
                 if(strings.length != 0){
 
 
                     byte log[];
                     if(!checkLog(strings[0])){
-                        log = "FALSE".getBytes();
+                        log = convertToBytes("FALSE");
 
                     }else{
-                        log = "TRUE".getBytes();
+                        log = convertToBytes("TRUE");
 
                         if(message != null){
                             System.out.println(SrcAddress.getHostName() +":"+SrcPort+"->"+message);
@@ -85,5 +85,18 @@ public class Main {
             if(str.equals(account))return true;
         }
         return false;
+    }
+    private static byte[] convertToBytes(Object object) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream out = new ObjectOutputStream(bos)) {
+            out.writeObject(object);
+            return bos.toByteArray();
+        }
+    }
+    private static Object convertFromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+             ObjectInputStream in = new ObjectInputStream(bis)) {
+            return in.readObject();
+        }
     }
 }

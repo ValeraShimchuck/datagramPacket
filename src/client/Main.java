@@ -1,5 +1,6 @@
 package client;
 
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -36,7 +37,7 @@ public class Main {
 
                 authToken = login+":"+password;
 
-                bKbdInput = authToken.getBytes();
+                bKbdInput = convertToBytes(authToken);
 
                 pout = new DatagramPacket(bKbdInput, bKbdInput.length,
                         OutAddress,9998);
@@ -45,12 +46,11 @@ public class Main {
 
                 s.receive(pin);
                 if(pin.getAddress().equals(OutAddress)){
-                    String str = new String(buf);
+                    String str = (String) convertFromBytes(buf);
                     StringTokenizer st;
                     st = new StringTokenizer(str,"\r\n");
 
                     str = new String((String) st.nextElement());
-                    str = str.replaceAll("\0","");
 
                     if(str.equals("TRUE")){
                         pass=true;
@@ -72,7 +72,7 @@ public class Main {
                     System.out.println("input message: ");
                     String message = in.nextLine();
 
-                    bKbdInput = (authToken+" "+"("+message+")").getBytes();
+                    bKbdInput = convertToBytes(authToken+" "+"("+message+")");
 
 
 
@@ -84,7 +84,7 @@ public class Main {
                     s.receive(pin);
 
                     if(pin.getAddress().equals(OutAddress)){
-                        String str = new String(buf);
+                        String str = (String) convertFromBytes(buf);
                         StringTokenizer st;
                         st = new StringTokenizer(str,"\r\n");
 
@@ -113,6 +113,19 @@ public class Main {
 
         }catch (Exception e){
             e.printStackTrace();
+        }
+    }
+    private static byte[] convertToBytes(Object object) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream out = new ObjectOutputStream(bos)) {
+            out.writeObject(object);
+            return bos.toByteArray();
+        }
+    }
+    private static Object convertFromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+             ObjectInputStream in = new ObjectInputStream(bis)) {
+            return in.readObject();
         }
     }
 }
